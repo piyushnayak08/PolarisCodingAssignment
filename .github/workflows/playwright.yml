@@ -28,7 +28,7 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run UI tests
-        run: npx playwright test --project=ui-chromium
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" npx playwright test --project=ui-chromium --headed
       - name: Upload UI report
         uses: actions/upload-artifact@v5
         if: ${{ !cancelled() }}

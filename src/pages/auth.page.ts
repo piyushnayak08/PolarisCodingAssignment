@@ -30,11 +30,29 @@ export class AuthPage {
     return passwordVisible;
   }
 
+  private async waitForAntiBotInterstitial(maxWaitMs = 45_000): Promise<void> {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < maxWaitMs) {
+      const title = (await this.page.title().catch(() => '')).toLowerCase();
+      const isChallengePage = /just a moment|attention required|verify you are human/.test(title);
+
+      if (!isChallengePage) {
+        return;
+      }
+
+      // Give challenge scripts a chance to complete, then retry loading target content.
+      await this.page.waitForTimeout(2_000);
+      await this.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+    }
+  }
+
   async gotoLogin(): Promise<void> {
     const routeAttempts = ['/auth/login', '/#/auth/login'];
 
     for (const route of routeAttempts) {
       await this.page.goto(route, { waitUntil: 'domcontentloaded' });
+      await this.waitForAntiBotInterstitial();
       if (await this.hasLoginForm(8_000)) {
         return;
       }
@@ -42,9 +60,11 @@ export class AuthPage {
 
     // CI can occasionally redirect initial auth routes; fall back to home and open Sign in from header.
     await this.page.goto('/', { waitUntil: 'domcontentloaded' });
+    await this.waitForAntiBotInterstitial();
     const signInLink = this.page.getByRole('link', { name: /^sign in$/i }).first();
     if (await signInLink.isVisible({ timeout: 10_000 }).catch(() => false)) {
       await signInLink.click();
+      await this.waitForAntiBotInterstitial();
       if (await this.hasLoginForm(10_000)) {
         return;
       }

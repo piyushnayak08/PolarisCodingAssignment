@@ -2,6 +2,24 @@
 
 A scalable Playwright + TypeScript test framework for the Practice Software Testing application, designed for both local execution and CI/CD pipelines.
 
+## Interviewer Notes
+This repository contains a Playwright + TypeScript automation framework covering both UI and API user-story validation for the Practice Software Testing app.
+
+Suggested review sequence:
+1. Run UI and API on `main` target to validate baseline framework health.
+2. Run UI and API on `buggy` target to observe intentional product regressions.
+3. Review documented defect analysis in `BUGS.md` and evidence summary in `BUG_REPORT_EVIDENCE.md`.
+
+Quick run commands:
+```bash
+npm ci
+npm run pw:install
+npm run test:ui
+npm run test:api
+npm run test:buggy:ui
+npm run test:buggy:api
+```
+
 ## What this framework delivers
 - Separate UI and API test layers with independent execution paths.
 - Reusable custom fixtures and page objects for maintainable automation.
@@ -107,6 +125,15 @@ npm run test:buggy:ui
 ```bash
 npm run test:buggy:api
 ```
+
+## Expected outcomes by target
+- `TEST_TARGET=main`: baseline validation run. The suite is expected to pass when the application behavior matches documented user stories.
+- `TEST_TARGET=buggy`: defect-detection run. Some tests are expected to fail and should be treated as bug evidence, not framework instability.
+
+Recommended review flow:
+1. Run `main` target first to verify framework health.
+2. Run `buggy` target next to capture regressions.
+3. Cross-reference failures with `BUGS.md` and report artifacts.
 
 ## Visual regression testing (what and how)
 

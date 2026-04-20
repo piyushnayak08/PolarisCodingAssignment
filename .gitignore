@@ -1,0 +1,24 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Local evidence/debug outputs
+/artifacts/
+/results.json
+/results.txt
+/discovered_tests.json
+/test_results*.json
+/test_results*.txt
+/test_run.json
+/us8_results.json
+/inspect_*.js
+
+# Root-level transient run outputs
+/api_*results*.json
+/buggy_ui_results*.json
+/ui_*results*.json

@@ -1,0 +1,81 @@
+name: Playwright UI and API Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  ui-tests:
+    name: UI - ${{ matrix.target }}
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [main, buggy]
+    env:
+      TEST_TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run UI tests
+        run: npx playwright test --project=ui-chromium
+      - name: Upload UI report
+        uses: actions/upload-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: ui-report-${{ matrix.target }}
+          path: playwright-report/
+          retention-days: 14
+      - name: Upload UI raw results
+        uses: actions/upload-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: ui-test-results-${{ matrix.target }}
+          path: test-results/
+          retention-days: 14
+
+  api-tests:
+    name: API - ${{ matrix.target }}
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [main, buggy]
+    env:
+      TEST_TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run API tests
+        run: npx playwright test --project=api
+      - name: Upload API report
+        uses: actions/upload-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: api-report-${{ matrix.target }}
+          path: playwright-report/
+          retention-days: 14
+      - name: Upload API raw results
+        uses: actions/upload-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: api-test-results-${{ matrix.target }}
+          path: test-results/
+          retention-days: 14

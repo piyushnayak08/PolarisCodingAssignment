@@ -20,18 +20,39 @@ export class AuthPage {
     this.loginButton = page.locator('form button[type="submit"], form input[type="submit"]').first();
   }
 
-  async gotoLogin(): Promise<void> {
-    await this.page.goto('/auth/login');
-
-    // Try normal routing first. Buggy deployment uses hash-based routes as fallback.
-    try {
-      await expect(this.emailInput).toBeVisible({ timeout: 7_000 });
-      return;
-    } catch {
-      await this.page.goto('/#/auth/login');
+  private async hasLoginForm(timeoutMs: number): Promise<boolean> {
+    const emailVisible = await this.emailInput.isVisible({ timeout: timeoutMs }).catch(() => false);
+    if (emailVisible) {
+      return true;
     }
 
-    await expect(this.emailInput.or(this.loginButton).first()).toBeVisible({ timeout: 15_000 });
+    const passwordVisible = await this.passwordInput.isVisible({ timeout: timeoutMs }).catch(() => false);
+    return passwordVisible;
+  }
+
+  async gotoLogin(): Promise<void> {
+    const routeAttempts = ['/auth/login', '/#/auth/login'];
+
+    for (const route of routeAttempts) {
+      await this.page.goto(route, { waitUntil: 'domcontentloaded' });
+      if (await this.hasLoginForm(8_000)) {
+        return;
+      }
+    }
+
+    // CI can occasionally redirect initial auth routes; fall back to home and open Sign in from header.
+    await this.page.goto('/', { waitUntil: 'domcontentloaded' });
+    const signInLink = this.page.getByRole('link', { name: /^sign in$/i }).first();
+    if (await signInLink.isVisible({ timeout: 10_000 }).catch(() => false)) {
+      await signInLink.click();
+      if (await this.hasLoginForm(10_000)) {
+        return;
+      }
+    }
+
+    const currentUrl = this.page.url();
+    const title = await this.page.title().catch(() => 'n/a');
+    throw new Error(`Unable to locate login form after route and header fallbacks. URL: ${currentUrl}; title: ${title}`);
   }
 
   async login(email: string, password: string): Promise<void> {
